@@ -1,0 +1,25 @@
+meta {
+  name: check insights
+  type: http
+}
+
+post {
+  url: http://localhost:9980/email-insights/check/insights
+  body: json
+  auth: basic
+}
+
+headers {
+  X-Correlation-ID: acceptance-tests
+}
+
+body:json {
+  {
+      "email": "john.doe@test.com"
+  }
+}
+
+auth:basic {
+  username: email-insights
+  password: local-test-token
+}
