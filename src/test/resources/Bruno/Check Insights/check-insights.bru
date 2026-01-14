@@ -4,22 +4,18 @@ meta {
 }
 
 post {
-  url: http://localhost:9980/email-insights/check/insights
+  url: http://localhost:9700/email-gateway/check/insights
   body: json
   auth: basic
 }
 
 headers {
   X-Correlation-ID: acceptance-tests
+  User-Agent: email-insights-acceptance-tests
 }
 
 body:json {
   {
       "email": "john.doe@test.com"
   }
-}
-
-auth:basic {
-  username: email-insights
-  password: local-test-token
 }

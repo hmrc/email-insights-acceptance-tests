@@ -87,17 +87,5 @@ class EmailInsightsSpec extends BaseSpec with BeforeAndAfterEach with BeforeAndA
       assert(response.status == 404)
       assert(response.body.contains("URI not found"))
     }
-    Scenario("[EI.2.3] - POST to check/insights with invalid credentials and return a 403 HTTP response") {
-      Given("the watchlist is empty")
-      assert(getWatchlistData.isEmpty)
-
-      When("a POST request is sent using invalid credentials")
-      val response = postInvalidAuthRequest(watchlistEmailAddress)
-
-      Then("a 403 HTTP response is returned")
-      assert(response.status == 403)
-      assert(response.body.contains("USER_NOT_ALLOWED"))
-      assert(response.body.contains("Invalid credentials"))
-    }
   }
 }

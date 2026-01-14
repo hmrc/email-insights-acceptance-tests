@@ -92,7 +92,7 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
 
     val response: StandaloneWSResponse =
       Await.result(
-        postWithAuth(checkInsightsEndpoint, request),
+        post(checkInsightsEndpoint, request),
         10.seconds
       )
     response
@@ -101,23 +101,9 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
   def postInvalidPayloadRequest(payload: String): StandaloneWSResponse = {
     val invalidPayload = payload
     val response       = Await.result(
-      postWithAuth(checkInsightsEndpoint, invalidPayload),
+      post(checkInsightsEndpoint, invalidPayload),
       10.seconds
     )
-    response
-  }
-
-  def postInvalidAuthRequest(emailAddress: String): StandaloneWSResponse = {
-    val request =
-      s"""{
-         |"email": "$emailAddress"
-         |}""".stripMargin
-
-    val response: StandaloneWSResponse =
-      Await.result(
-        postWithInvalidAuth(checkInsightsEndpoint, request),
-        10.seconds
-      )
     response
   }
 
