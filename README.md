@@ -23,30 +23,13 @@ If you don't have postgres installed locally you can run it in docker using the 
     docker run -d --rm --name postgresql -e POSTGRES_DB=emailinsights -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:latest
 ```
 
-Start the dependent services by running the `./start_services.sh` script.
+### Starting dependent services
 
-Or run the following command:
+The following command will start all the relevant services via sm2 that are required to run the acceptance tests:
 
-```bash
-    sm2 --start EMAIL_INSIGHTS_PROXY EMAIL_INSIGHTS EMAIL_GATEWAY CIP_RISK INTERNAL_AUTH --appendArgs '{
-        "EMAIL_INSIGHTS_PROXY": [
-            "-J-Dauditing.consumer.baseUri.port=6001",
-            "-J-Dauditing.consumer.baseUri.host=localhost",
-            "-J-Dauditing.enabled=false",
-            "-J-Dmicroservice.services.access-control.enabled=true",
-            "-J-Dmicroservice.services.access-control.allow-list.0=email-gateway",
-            "-J-Dmicroservice.services.access-control.allow-list.1=email-insights-acceptance-tests"
-        ],
-        "EMAIL_INSIGHTS": [
-            "-J-Dapplication.router=testOnlyDoNotUseInAppConf.Routes",
-            "-J-Ddb.emailinsights.url=jdbc:postgresql://localhost:5432/",
-            "-J-Dauditing.enabled=false"
-        ],
-        "CIP_RISK": [
-            "-J-Dauditing.enabled=false"
-        ]
-    }'
-```
+Execute the `./start_services.sh` script:
+
+`./start_services.sh`
 
 ### Running specs
 
