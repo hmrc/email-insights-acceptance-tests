@@ -58,14 +58,6 @@ trait HttpClientHelper extends HttpClient with Logging {
       .post(Json.parse(body))
   }
 
-  def postWithInvalidAuth(url: String, body: String, headers: (String, String)*): Future[StandaloneWSResponse] =
-    val username = "invalid-user"
-    val password = "invalid-password"
-    mkRequest(url)
-      .withHttpHeaders(headers: _*)
-      .withAuth(username, password, play.api.libs.ws.WSAuthScheme.BASIC)
-      .post(Json.parse(body))
-
   def invalidPostRequest(url: String, body: String, headers: (String, String)*): Future[StandaloneWSResponse] = {
     val allHeaders = this.headers ++ headers
     mkRequest(url)
