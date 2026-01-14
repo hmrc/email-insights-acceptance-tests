@@ -1,0 +1,32 @@
+meta {
+  name: watchlist data
+  type: http
+}
+
+post {
+  url: http://localhost:9701/email-insights-proxy/test-only/watchlist/data/create
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  User-Agent: email-insights-acceptance-tests
+  X-Correlation-ID: acceptance-tests
+}
+
+body:json {
+  {
+    "generatedEntries":{
+      "numberOfEntries": 5
+     },
+    "manualEntries":{
+      "emailAddresses":[
+        "john.doe@test.com",
+        "jane.doe@test.com",
+        "joe.bloggs@test.com",
+        "jane.bloggs@test.com"
+      ]
+     }
+  }
+}

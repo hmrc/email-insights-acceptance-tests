@@ -1,54 +1,41 @@
-**This is the template README. Please update this with project specific content.**
-
 # email-insights-acceptance-tests
 
-<SERVICE_NAME> API tests.
+This repository contains api acceptance tests for the Email Insights service built using the [api-test-runner](https://github.com/hmrc/api-test-runner) library.
 
-## Pre-requisites
+## Running the tests
 
-### Services
+Prior to executing the tests ensure you have:
 
-Start Mongo Docker container as follows:
+- Installed/configured [sm2 (service manager 2)](https://github.com/hmrc/sm2).
+- Postgres DB installed locally or running in Docker.
 
-```bash
-docker run --rm -d -p 27017:27017 --name mongo percona/percona-server-mongodb:6.0
-```
+### Start the local services
 
-Start `<SERVICE_MANAGER_PROFILE>` services as follows:
-
-```bash
-sm2 --start <SERVICE_MANAGER_PROFILE>
-```
-
-## Tests
-
-Run tests as follows:
-
-* Argument `<environment>` must be `local`, `dev`, `qa` or `staging`.
+If you don't have mongodb installed locally you can run it in docker using the following commands:
 
 ```bash
-./run-tests.sh <environment>
+    docker run --rm -d -p 27017:27017 --name mongo percona/percona-server-mongodb:7.0
 ```
 
-## Scalafmt
-
-Check all project files are formatted as expected as follows:
+If you don't have postgres installed locally you can run it in docker using the following command
 
 ```bash
-sbt scalafmtCheckAll scalafmtCheck
+    docker run -d --rm --name postgresql -e POSTGRES_DB=emailinsights -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:latest
 ```
 
-Format `*.sbt` and `project/*.scala` files as follows:
+### Starting dependent services
 
-```bash
-sbt scalafmtSbt
-```
+The following command will start all the relevant services via sm2 that are required to run the acceptance tests:
 
-Format all project files as follows:
+Execute the `./start_services.sh` script:
 
-```bash
-sbt scalafmtAll
-```
+`./start_services.sh`
+
+### Running specs
+
+Execute the `run_tests.sh` script:
+
+`./run_tests.sh`
 
 ## License
 

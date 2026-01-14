@@ -1,0 +1,21 @@
+meta {
+  name: check insights
+  type: http
+}
+
+post {
+  url: http://localhost:9700/email-gateway/check/insights
+  body: json
+  auth: none
+}
+
+headers {
+  X-Correlation-ID: acceptance-tests
+  User-Agent: email-insights-acceptance-tests
+}
+
+body:json {
+  {
+      "email": "john.doe@test.com"
+  }
+}
