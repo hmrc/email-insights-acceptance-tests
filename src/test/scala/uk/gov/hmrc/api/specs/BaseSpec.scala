@@ -111,8 +111,8 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
     val response = postCheckInsightsRequest(emailAddress)
     val body     = response.body
     val json     = Json.parse(body)
-    assert((json \ "attribute").asOpt[String].contains("EMAIL"))
-    assert((json \ "value").asOpt[String].contains(emailAddress))
+    assert((json \ "attributeType").asOpt[String].contains("EMAIL"))
+    assert((json \ "attributeValue").asOpt[String].contains(emailAddress))
     assert((json \ "insights" \ "risk" \ "score").asOpt[Int].contains(100))
     assert((json \ "insights" \ "risk" \ "reason").asOpt[String].contains("ON_WATCH_LIST"))
     assert((json \ "insights" \ "watchlistData" \ "isOnWatchlist").asOpt[Boolean].contains(true))
@@ -123,8 +123,8 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
     val response = postCheckInsightsRequest(emailAddress)
     val body     = response.body
     val json     = Json.parse(body)
-    assert((json \ "attribute").asOpt[String].contains("EMAIL"))
-    assert((json \ "value").asOpt[String].contains(emailAddress))
+    assert((json \ "attributeType").asOpt[String].contains("EMAIL"))
+    assert((json \ "attributeValue").asOpt[String].contains(emailAddress))
     assert((json \ "insights" \ "risk" \ "score").asOpt[Int].contains(0))
     assert((json \ "insights" \ "risk" \ "reason").asOpt[String].contains("NOT_ON_WATCH_LIST. Reasons: No risk"))
     assert((json \ "insights" \ "watchlistData" \ "isOnWatchlist").asOpt[Boolean].contains(false))
