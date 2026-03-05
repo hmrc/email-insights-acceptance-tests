@@ -1,0 +1,35 @@
+meta {
+  name: graph data
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:9701/test-only/cip-risk/str/vertex-data
+  body: json
+  auth: inherit
+}
+
+headers {
+  User-Agent: email-insights-acceptance-tests
+  X-Correlation-ID: acceptance-tests
+}
+
+body:json {
+  {
+    "randomEntriesToGenerate": 100000,
+    "batchInsertSize": 1000,
+    "vertexRecords": [{
+      "vertexId": 1,
+      "attributeId": "john.doe@test.com",
+      "data": "{}",
+      "vertexType": "email",
+      "hopsToClosestRisky": 1
+    }]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

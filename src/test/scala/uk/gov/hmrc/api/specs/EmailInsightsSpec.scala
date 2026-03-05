@@ -21,46 +21,57 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 class EmailInsightsSpec extends BaseSpec with BeforeAndAfterEach with BeforeAndAfterAll {
 
-  val watchlistEmailAddress = "john.doe@test.com"
-  val safeEmailAddress      = "james.hughes@test.com"
+  val riskyEmailAddress = "john.doe@test.com"
+  val safeEmailAddress  = "james.hughes@test.com"
 
   val invalidPayload          = "{}"
   val invalidInsightsEndpoint = s"$baseUrl/check/invalid-endpoint"
 
-  override def beforeEach(): Unit =
+  override def beforeEach(): Unit = {
     clearWatchlistData()
+    clearGraphData()
+  }
 
   override def afterEach(): Unit = {
     clearWatchlistData()
+    clearGraphData()
     super.afterAll()
   }
 
-  Feature("[EI-1]- Email Insights - Check if an email exists/does not exist on the watchlist") {
-    Scenario("[EI.1.1] - Email exists on the watchlist") {
-      Given("the watchlist is empty")
+  Feature("[EI-1]- Email Insights - Check if an email exists/does not exist") {
+    Scenario("[EI.1.1] - Email exists on the watchlist & graph database") {
+      Given("the watchlist & graph database is empty")
       assert(getWatchlistData.isEmpty)
+      assert(getGraphData.isEmpty)
 
-      When(s"I add the email '$watchlistEmailAddress' to the watchlist")
-      createWatchlistData(0, watchlistEmailAddress)
+      When(s"I add the email '$riskyEmailAddress' to the watchlist & graph database")
+      createWatchlistData(0, riskyEmailAddress)
+      createGraphData(1000, riskyEmailAddress)
 
       And("I send a POST request to the check/insights endpoint")
-      postCheckInsightsRequest(watchlistEmailAddress)
+      postCheckInsightsRequest(riskyEmailAddress)
 
-      Then("the response should indicate that the email exists on the watchlist and the payload is correct")
-      assertEmailIsOnWatchlist(watchlistEmailAddress)
+      Then(
+        "the response should indicate that the email exists on the watchlist & graph database & the payload is correct"
+      )
+      validateRiskyEmailPayload(riskyEmailAddress)
     }
-    Scenario("[EI.1.2] - Email does not exist on the watchlist") {
-      Given("the watchlist is empty")
+    Scenario("[EI.1.2] - Email does not exist on the watchlist & graph database") {
+      Given("the watchlist & graph database is empty")
       assert(getWatchlistData.isEmpty)
+      assert(getGraphData.isEmpty)
 
-      When(s"I add the email '$watchlistEmailAddress' to the watchlist")
-      createWatchlistData(0, watchlistEmailAddress)
+      When(s"I add the email '$riskyEmailAddress' to the watchlist & graph database")
+      createWatchlistData(0, riskyEmailAddress)
+      createGraphData(1000, riskyEmailAddress)
 
       And("I send a POST request to the check/insights endpoint")
       postCheckInsightsRequest(safeEmailAddress)
 
-      Then(s"the response should indicate that the email does not exist on the watchlist and the payload is correct")
-      assertEmailIsNotOnWatchlist(safeEmailAddress)
+      Then(
+        s"the response should indicate that the email does not exist on the watchlist & graph database & the payload is correct"
+      )
+      validateSafeNumberPayload(safeEmailAddress)
     }
   }
 
