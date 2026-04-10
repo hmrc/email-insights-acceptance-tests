@@ -1,0 +1,16 @@
+meta {
+  name: count data
+  type: http
+  seq: 6
+}
+
+delete {
+  url: http://localhost:9980/email-insights/test-only/occurrence-logs/data/delete
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
