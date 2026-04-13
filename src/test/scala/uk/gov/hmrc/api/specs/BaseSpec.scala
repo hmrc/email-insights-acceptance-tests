@@ -136,7 +136,7 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
     responseBody should include regex "Deleted \\d+ vertices"
   }
 
-  def createCountData(): Unit = {
+  def createCountData(numberOfEntries: Int, email: String): Unit = {
     val request =
       s"""{
         | "generatedEntries": {
