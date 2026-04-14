@@ -43,8 +43,7 @@ class EmailInsightsSpec extends BaseSpec with BeforeAndAfterEach with BeforeAndA
       Given("the watchlist & graph database is empty")
       assert(getWatchlistData.isEmpty)
       assert(getGraphData.isEmpty)
-      assert(getCountData.isEmpty)
-
+      assert(getCountsData.isEmpty)
 
       When(s"I add the email '$riskyEmailAddress' to the watchlist & graph database")
       createWatchlistData(0, riskyEmailAddress)
@@ -63,7 +62,7 @@ class EmailInsightsSpec extends BaseSpec with BeforeAndAfterEach with BeforeAndA
       Given("the watchlist & graph database is empty")
       assert(getWatchlistData.isEmpty)
       assert(getGraphData.isEmpty)
-      assert(getCountData.isEmpty)
+      assert(getCountsData.isEmpty)
 
       When(s"I add the email '$riskyEmailAddress' to the watchlist & graph database")
       createWatchlistData(0, riskyEmailAddress)
