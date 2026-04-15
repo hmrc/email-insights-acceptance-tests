@@ -33,10 +33,14 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
   val testOnlyEndpointCreateData = s"$watchlistTestOnlyEndpoint/create"
   val testOnlyEndpointCounts     = s"$watchlistTestOnlyEndpoint/counts"
 
-  val countsTestOnlyEndpoint           = s"$countsDatabaseUrl/<>"
+  // val countsTestOnlyEndpoint           = s"$countsDatabaseUrl/<>"
+
+  val countsTestOnlyEndpoint = s"$countsDatabaseUrl/test-only/occurrence-logs/data"
+
+  // http://localhost:9980/email-insights/test-only/occurrence-logs/data
   val testOnlyEndpointDeleteCountData  = s"$countsTestOnlyEndpoint/delete"
-  val testOnlyEndpointCreateCountData  = s"$countsTestOnlyEndpoint/create"
-  val testOnlyEndpointOccurrenceCounts = s"$countsTestOnlyEndpoint/counts"
+  val testOnlyEndpointCreateCountData  = s"$countsTestOnlyEndpoint"
+  val testOnlyEndpointOccurrenceCounts = s"$countsTestOnlyEndpoint"
 
   val graphDataTestOnlyEndpoint = s"$graphDatabaseUrl/test-only/cip-risk/str/vertex-data"
 
