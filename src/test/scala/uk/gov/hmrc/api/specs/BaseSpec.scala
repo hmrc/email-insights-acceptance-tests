@@ -33,13 +33,10 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
   val testOnlyEndpointCreateData = s"$watchlistTestOnlyEndpoint/create"
   val testOnlyEndpointCounts     = s"$watchlistTestOnlyEndpoint/counts"
 
-  // val countsTestOnlyEndpoint           = s"$countsDatabaseUrl/<>"
-
   val countsTestOnlyEndpoint = s"$countsDatabaseUrl/test-only/occurrence-logs/data"
 
-  // http://localhost:9980/email-insights/test-only/occurrence-logs/data
   val testOnlyEndpointDeleteCountData  = s"$countsTestOnlyEndpoint/delete"
-  val testOnlyEndpointCreateCountData  = s"$countsTestOnlyEndpoint"
+  val testOnlyEndpointCreateCountData  = s"$countsTestOnlyEndpoint/create"
   val testOnlyEndpointOccurrenceCounts = s"$countsTestOnlyEndpoint"
 
   val graphDataTestOnlyEndpoint = s"$graphDatabaseUrl/test-only/cip-risk/str/vertex-data"
@@ -158,12 +155,12 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
 
     val createEmailInsightsTestOnlyData: StandaloneWSResponse =
       Await.result(
-        post(countsTestOnlyEndpoint, request),
+        post(testOnlyEndpointCreateCountData, request),
         10.seconds
       )
 
     val responseBody = createEmailInsightsTestOnlyData.body
-    responseBody should include regex "Generated \\d+ vertices"
+    responseBody should include regex "Created \\d+ email occurrence logs"
     assert(createEmailInsightsTestOnlyData.status == 200)
   }
 
@@ -183,7 +180,7 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
     val clearDataFromEndpoint =
       Await.result(delete(countsTestOnlyEndpoint), 10.seconds)
     val responseBody          = clearDataFromEndpoint.body
-    responseBody should include regex "Deleted \\d+ vertices"
+    responseBody should include regex "Deleted \\d+ email occurrence logs"
   }
 
   def postCheckInsightsRequest(emailAddress: String): StandaloneWSResponse = {
