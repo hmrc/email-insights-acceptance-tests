@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: http://localhost:9980/email-insights/test-only/occurrence-logs/data
+  url: http://localhost:9980/email-insights/test-only/occurrence-logs/data/create
   body: json
   auth: inherit
 }
@@ -16,19 +16,19 @@ headers {
 }
 
 body:json {
-    {
-      "generatedEntries": {
-        "numberOfEmails": 3,
-        "numberOfAttributeGroupsPerEmail": 4
-      },
-      "manualEntries": {
-        "emailAddresses" : [
-            "peter@example.com",
-            "fred@example.com"
-        ],
-        "numberOfAttributeGroupsPerEmail": 2
-      }
+  {
+    "generatedEntries": {
+      "numberOfEmails": 3,
+      "numberOfAttributeGroupsPerEmail": 4
+    },
+    "manualEntries": {
+      "emailAddresses" : [
+          "peter@example.com",
+          "fred@example.com"
+      ],
+      "numberOfAttributeGroupsPerEmail": 2
     }
+  }
 }
 
 settings {
