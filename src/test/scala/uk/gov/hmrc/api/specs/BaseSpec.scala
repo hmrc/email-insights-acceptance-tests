@@ -178,7 +178,7 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
 
   def clearCountData(): Assertion = {
     val clearDataFromEndpoint =
-      Await.result(delete(countsTestOnlyEndpoint), 10.seconds)
+      Await.result(delete(testOnlyEndpointDeleteCountData), 10.seconds)
     val responseBody          = clearDataFromEndpoint.body
     responseBody should include regex "Deleted \\d+ email occurrence logs"
   }
