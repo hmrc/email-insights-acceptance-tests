@@ -30,50 +30,50 @@ class EmailInsightsSpec extends BaseSpec with BeforeAndAfterEach with BeforeAndA
   override def beforeEach(): Unit = {
     clearWatchlistData()
     clearGraphData()
+    clearCountData()
   }
 
   override def afterEach(): Unit = {
     clearWatchlistData()
     clearGraphData()
+    clearCountData()
     super.afterAll()
   }
 
   Feature("[EI-1]- Email Insights - Check if an email exists/does not exist") {
-    Scenario("[EI.1.1] - Email exists on the watchlist & graph database") {
+    Scenario("[EI.1.1] - Email exists on the watchlist, graph and counts database") {
       Given("the watchlist & graph database is empty")
       assert(getWatchlistData.isEmpty)
       assert(getGraphData.isEmpty)
       assert(getCountsData.isEmpty)
 
-      When(s"I add the email '$riskyEmailAddress' to the watchlist & graph database")
+      When(s"I add the email '$riskyEmailAddress' to the watchlist, graph and counts database")
       createWatchlistData(0, riskyEmailAddress)
       createGraphData(1000, riskyEmailAddress)
       createCountData(0, riskyEmailAddress)
-
       And("I send a POST request to the check/insights endpoint")
       postCheckInsightsRequest(riskyEmailAddress)
-
       Then(
-        "the response should indicate that the email exists on the watchlist & graph database & the payload is correct"
+        "the response should indicate that the email exists on the watchlist, graph and counts database & the payload is correct"
       )
       validateRiskyEmailPayload(riskyEmailAddress)
     }
-    Scenario("[EI.1.2] - Email does not exist on the watchlist & graph database") {
-      Given("the watchlist & graph database is empty")
+
+    Scenario("[EI.1.2] - Email does not exist on the watchlist, graph and counts database") {
+      Given("the watchlist, graph and counts database is empty")
       assert(getWatchlistData.isEmpty)
       assert(getGraphData.isEmpty)
       assert(getCountsData.isEmpty)
 
-      When(s"I add the email '$riskyEmailAddress' to the watchlist & graph database")
+      When(s"I add the email '$riskyEmailAddress' to the watchlist, graph and counts database")
       createWatchlistData(0, riskyEmailAddress)
       createGraphData(1000, riskyEmailAddress)
       createCountData(0, riskyEmailAddress)
-
       And("I send a POST request to the check/insights endpoint")
       postCheckInsightsRequest(safeEmailAddress)
 
       Then(
-        s"the response should indicate that the email does not exist on the watchlist & graph database & the payload is correct"
+        s"the response should indicate that the email does not exist on the watchlist, graph and counts database & the payload is correct"
       )
       validateSafeNumberPayload(safeEmailAddress)
     }
