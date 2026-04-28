@@ -27,9 +27,10 @@ import scala.concurrent.Future
 
 trait HttpClientHelper extends HttpClient with Logging {
 
-  val baseUrl: String          = TestEnvironment.url("email-gateway")
-  val testOnlyBaseUrl: String  = TestEnvironment.url("email-insights-proxy")
-  val graphDatabaseUrl: String = TestEnvironment.url("graph-data-url")
+  val baseUrl: String           = TestEnvironment.url("email-gateway")
+  val testOnlyBaseUrl: String   = TestEnvironment.url("email-insights-proxy")
+  val graphDatabaseUrl: String  = TestEnvironment.url("graph-data-url")
+  val countsDatabaseUrl: String = TestEnvironment.url("count-url")
 
   def headers: Seq[(String, String)] =
     Seq(
