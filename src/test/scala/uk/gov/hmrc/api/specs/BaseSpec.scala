@@ -33,6 +33,12 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
   val testOnlyEndpointCreateData = s"$watchlistTestOnlyEndpoint/create"
   val testOnlyEndpointCounts     = s"$watchlistTestOnlyEndpoint/counts"
 
+  val countsTestOnlyEndpoint = s"$countsDatabaseUrl/test-only/occurrence-logs/data"
+
+  val testOnlyEndpointDeleteCountData  = s"$countsTestOnlyEndpoint/delete"
+  val testOnlyEndpointCreateCountData  = s"$countsTestOnlyEndpoint/create"
+  val testOnlyEndpointOccurrenceCounts = s"$countsTestOnlyEndpoint"
+
   val graphDataTestOnlyEndpoint = s"$graphDatabaseUrl/test-only/cip-risk/str/vertex-data"
 
   val checkInsightsEndpoint = s"$baseUrl/check/insights"
@@ -129,6 +135,52 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
       Await.result(delete(graphDataTestOnlyEndpoint), 10.seconds)
     val responseBody          = clearDataFromEndpoint.body
     responseBody should include regex "Deleted \\d+ vertices"
+  }
+
+  def createCountData(numberOfEntries: Int, email: String): Unit = {
+    val request =
+      s"""{
+        | "generatedEntries": {
+        | "numberOfEmails": 3,
+        | "numberOfAttributeGroupsPerEmail": 4
+        | },
+        | "manualEntries": {
+        | "emailAddresses" : [
+        |    "peter@example.com",
+        |    "fred@example.com"
+        | ],
+        | "numberOfAttributeGroupsPerEmail": 2
+        | }
+        |}""".stripMargin
+
+    val createEmailInsightsTestOnlyData: StandaloneWSResponse =
+      Await.result(
+        post(testOnlyEndpointCreateCountData, request),
+        10.seconds
+      )
+
+    val responseBody = createEmailInsightsTestOnlyData.body
+    responseBody should include regex "Created \\d+ email occurrence logs"
+    assert(createEmailInsightsTestOnlyData.status == 200)
+  }
+
+  def getCountsData: Seq[String] = {
+    val response = Await.result(
+      get(countsTestOnlyEndpoint),
+      10.seconds
+    )
+    val body     = if (response.status == 200 && response.body.trim.nonEmpty) response.body else "{}"
+    val json     = Json.parse(body)
+    (json \\ "emailsOnWatchlistEntries").headOption
+      .flatMap(_.asOpt[Seq[String]])
+      .getOrElse(Seq.empty)
+  }
+
+  def clearCountData(): Assertion = {
+    val clearDataFromEndpoint =
+      Await.result(delete(testOnlyEndpointDeleteCountData), 10.seconds)
+    val responseBody          = clearDataFromEndpoint.body
+    responseBody should include regex "Deleted \\d+ email occurrence logs"
   }
 
   def postCheckInsightsRequest(emailAddress: String): StandaloneWSResponse = {

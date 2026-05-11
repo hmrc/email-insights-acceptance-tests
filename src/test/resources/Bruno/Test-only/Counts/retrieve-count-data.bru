@@ -1,0 +1,27 @@
+meta {
+  name:count data
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://localhost:9980/email-insights/test-only/occurrence-logs/data/counts
+  body: none
+  auth: inherit
+}
+
+params:query {
+  limit: 10
+  offset: 5
+  vertexType: email
+}
+
+headers {
+  User-Agent: email-insights-acceptance-tests
+  X-Correlation-ID: acceptance-tests
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
