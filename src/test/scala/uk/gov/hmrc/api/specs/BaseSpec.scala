@@ -171,7 +171,7 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
     )
     val body     = if (response.status == 200 && response.body.trim.nonEmpty) response.body else "{}"
     val json     = Json.parse(body)
-    (json \\ "emailsOnWatchlistEntries").headOption
+    (json \\ "emailOccurrenceLogsCount").headOption
       .flatMap(_.asOpt[Seq[String]])
       .getOrElse(Seq.empty)
   }
@@ -222,6 +222,9 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
 
     assert((json \ "insights" \ "graphData" \ "hops").asOpt[Int].contains(2))
     assert((json \ "insights" \ "graphData" \ "avgHops").asOpt[BigDecimal].exists(_ >= 2))
+    assert((json \ "insights" \ "emailOccurrenceLogsCount").asOpt[Int].contains(3))
+
+
   }
 
   def validateSafeNumberPayload(emailAddress: String): Unit = {
@@ -237,8 +240,8 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
     assert(reasons.nonEmpty)
     assert(reasons.exists(_.contains(s"EMAIL '$emailAddress' is not in the database.")))
     assert(reasons.exists(_.contains("hops from something risky")))
-
     assert((json \ "insights" \ "graphData" \ "avgHops").asOpt[BigDecimal].exists(_ >= 2))
+    
   }
 
   def postInvalidEndpoint(invalidEndpoint: String): StandaloneWSResponse = {
