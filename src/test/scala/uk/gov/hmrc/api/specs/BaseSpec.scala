@@ -164,24 +164,27 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
     assert(createEmailInsightsTestOnlyData.status == 200)
   }
 
-  def getCountsData: Seq[String] = {
-    val response = Await.result(
-      get(countsTestOnlyEndpoint),
-      10.seconds
-    )
-    val body     = if (response.status == 200 && response.body.trim.nonEmpty) response.body else "{}"
-    val json     = Json.parse(body)
-    (json \\ "emailOccurrenceLogsCount").headOption
-      .flatMap(_.asOpt[Seq[String]])
-      .getOrElse(Seq.empty)
-  }
+  
 
-  def clearCountData(): Assertion = {
-    val clearDataFromEndpoint =
-      Await.result(delete(testOnlyEndpointDeleteCountData), 10.seconds)
-    val responseBody          = clearDataFromEndpoint.body
-    responseBody should include regex "Deleted \\d+ email occurrence logs"
-  }
+def getCountsData: Int = {
+  val response = Await.result(
+    get(countsTestOnlyEndpoint),
+    10.seconds
+  )
+  val body     = if (response.status == 200 && response.body.trim.nonEmpty) response.body else "{}"
+  val json     = Json.parse(body)
+  (json \ "emailOccurrenceLogsCount").asOpt[Int].getOrElse(0)
+}
+
+def clearCountData(): Assertion = {
+  val clearDataFromEndpoint =
+    Await.result(delete(testOnlyEndpointDeleteCountData), 10.seconds)
+  val responseBody          = clearDataFromEndpoint.body
+  responseBody should include regex "Deleted \\d+ email occurrence logs"
+}
+
+
+
 
   def postCheckInsightsRequest(emailAddress: String): StandaloneWSResponse = {
     val request =
