@@ -22,6 +22,8 @@ import org.scalatest.{Assertion, GivenWhenThen}
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.ws.StandaloneWSResponse
 import uk.gov.hmrc.api.helpers.HttpClientHelper
+import org.scalatest.matchers.should.Matchers.*
+import play.api.libs.json.*
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
@@ -32,6 +34,12 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
   val testOnlyEndpointDeleteData = s"$watchlistTestOnlyEndpoint/delete"
   val testOnlyEndpointCreateData = s"$watchlistTestOnlyEndpoint/create"
   val testOnlyEndpointCounts     = s"$watchlistTestOnlyEndpoint/counts"
+
+  val countsTestOnlyEndpoint = s"$countsDatabaseUrl/test-only/occurrence-logs/data"
+
+  val testOnlyEndpointDeleteCountData  = s"$countsTestOnlyEndpoint/delete"
+  val testOnlyEndpointCreateCountData  = s"$countsTestOnlyEndpoint/create"
+  val testOnlyEndpointOccurrenceCounts = s"$countsTestOnlyEndpoint/counts"
 
   val graphDataTestOnlyEndpoint = s"$graphDatabaseUrl/test-only/cip-risk/str/vertex-data"
 
@@ -85,6 +93,47 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
       Await.result(delete(testOnlyEndpointDeleteData), 10.seconds)
     val responseBody          = clearDataFromEndpoint.body
     responseBody should include regex "Deleted \\d+ watchlist email addresses"
+  }
+
+  def createCountData(numberOfGeneratedEmails: Int, manualEmailAddresses: String): Unit = {
+    val manualEmailsJson = s"[\"$manualEmailAddresses\"]"
+    val request          =
+      s"""{
+         | "generatedEntries": {
+         | "numberOfEmails": $numberOfGeneratedEmails,
+         | "numberOfAttributeGroupsPerEmail": 4
+         | },
+         | "manualEntries": {
+         | "emailAddresses" : $manualEmailsJson,
+         | "numberOfAttributeGroupsPerEmail": 2
+         | }
+         |}""".stripMargin
+
+    val createEmailInsightsTestOnlyData: StandaloneWSResponse =
+      Await.result(
+        post(testOnlyEndpointCreateCountData, request),
+        10.seconds
+      )
+    val responseBody                                          = createEmailInsightsTestOnlyData.body
+    responseBody should include regex "Created \\d+ email occurrence logs"
+    assert(createEmailInsightsTestOnlyData.status == 200)
+  }
+
+  def getCounts: Int = {
+    val response = Await.result(
+      get(testOnlyEndpointOccurrenceCounts),
+      10.seconds
+    )
+    val body     = if (response.status == 200 && response.body.trim.nonEmpty) response.body else "{}"
+    val json     = Json.parse(body)
+    (json \ "emailOccurrenceLogsCount").asOpt[Int].getOrElse(0)
+  }
+
+  def clearCountsData(): Assertion = {
+    val clearDataFromEndpoint =
+      Await.result(delete(testOnlyEndpointDeleteCountData), 10.seconds)
+    val responseBody          = clearDataFromEndpoint.body
+    responseBody should include regex "Deleted \\d+ email occurrence logs"
   }
 
   def createGraphData(numberOfEntries: Int, email: String): Unit = {
@@ -155,21 +204,30 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
   }
 
   def validateRiskyEmailPayload(emailAddress: String): Unit = {
-    val response = postCheckInsightsRequest(emailAddress)
-    val body     = response.body
-    val json     = Json.parse(body)
+    val response        = postCheckInsightsRequest(emailAddress)
+    val body            = response.body
+    val json            = Json.parse(body)
     assert((json \ "attributeType").asOpt[String].contains("EMAIL"))
     assert((json \ "attributeValue").asOpt[String].contains(emailAddress))
     assert((json \ "insights" \ "risk" \ "score").asOpt[Int].contains(100))
     assert((json \ "insights" \ "risk" \ "reason").asOpt[String].contains("ON_WATCH_LIST"))
     assert((json \ "insights" \ "watchlistData" \ "isOnWatchlist").asOpt[Boolean].contains(true))
-    val reasons  = (json \ "insights" \ "graphData" \ "reasons").asOpt[Seq[String]].getOrElse(Seq.empty)
+    val reasons         = (json \ "insights" \ "graphData" \ "reasons").asOpt[Seq[String]].getOrElse(Seq.empty)
     assert(reasons.nonEmpty)
     assert(reasons.exists(_.contains(s"EMAIL '$emailAddress'")))
     assert(reasons.exists(_.contains("hops from something risky")))
-
     assert((json \ "insights" \ "graphData" \ "hops").asOpt[Int].contains(2))
     assert((json \ "insights" \ "graphData" \ "avgHops").asOpt[BigDecimal].exists(_ >= 2))
+    val attributes      = (json \ "insights" \ "relationship" \ "attributes").asOpt[Seq[JsValue]].getOrElse(Seq.empty)
+    assert(attributes.nonEmpty)
+    val attributeValues =
+      attributes.flatMap(attr => (attr \ "attributeValues").asOpt[Seq[JsValue]].getOrElse(Seq.empty))
+    assert(attributeValues.nonEmpty)
+    assert(attributes.exists(attr => (attr \ "attributeType").asOpt[String].isDefined))
+    assert(attributes.exists(attr => (attr \ "count").asOpt[Int].isDefined))
+    assert(attributeValues.exists(v => (v \ "attributeValue").asOpt[String].isDefined))
+    assert(attributeValues.exists(v => (v \ "numberOfOccurrences").asOpt[Int].isDefined))
+    assert(attributeValues.exists(v => (v \ "lastSeen").asOpt[String].isDefined))
   }
 
   def validateSafeNumberPayload(emailAddress: String): Unit = {

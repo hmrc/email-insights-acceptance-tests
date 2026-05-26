@@ -1,0 +1,31 @@
+meta {
+  name: Email occurrence data
+  type: http
+}
+
+post {
+  url: http://localhost:9701/email-insights/test-only/occurrence-logs/data/create
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  User-Agent: email-insights-acceptance-tests
+  X-Correlation-ID: acceptance-tests
+}
+body:json {
+  {
+    "generatedEntries": {
+      "numberOfEmails": 3,
+      "numberOfAttributeGroupsPerEmail": 4
+    },
+    "manualEntries": {
+      "emailAddresses" : [
+          "peter@example.com",
+          "fred@example.com"
+      ],
+      "numberOfAttributeGroupsPerEmail": 2
+    }
+  }
+}
