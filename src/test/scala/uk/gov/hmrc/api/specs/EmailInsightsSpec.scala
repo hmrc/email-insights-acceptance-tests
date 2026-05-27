@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.api.specs
 
+import org.scalactic.Prettifier.default
 import org.scalatest.matchers.should.Matchers.*
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
@@ -26,15 +27,18 @@ class EmailInsightsSpec extends BaseSpec with BeforeAndAfterEach with BeforeAndA
 
   val invalidPayload          = "{}"
   val invalidInsightsEndpoint = s"$baseUrl/check/invalid-endpoint"
+  val countsEndpoint          = s"$countsDatabaseUrl/check/invalid-endpoint"
 
   override def beforeEach(): Unit = {
     clearWatchlistData()
     clearGraphData()
+    clearCountsData()
   }
 
   override def afterEach(): Unit = {
     clearWatchlistData()
     clearGraphData()
+    clearCountsData()
     super.afterAll()
   }
 
@@ -43,10 +47,12 @@ class EmailInsightsSpec extends BaseSpec with BeforeAndAfterEach with BeforeAndA
       Given("the watchlist & graph database is empty")
       assert(getWatchlistData.isEmpty)
       assert(getGraphData.isEmpty)
+      assert(getCounts == 0)
 
       When(s"I add the email '$riskyEmailAddress' to the watchlist & graph database")
       createWatchlistData(0, riskyEmailAddress)
       createGraphData(1000, riskyEmailAddress)
+      createCountData(2, riskyEmailAddress)
 
       And("I send a POST request to the check/insights endpoint")
       postCheckInsightsRequest(riskyEmailAddress)

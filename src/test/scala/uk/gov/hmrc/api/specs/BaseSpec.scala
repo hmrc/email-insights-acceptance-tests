@@ -22,6 +22,8 @@ import org.scalatest.{Assertion, GivenWhenThen}
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.ws.StandaloneWSResponse
 import uk.gov.hmrc.api.helpers.HttpClientHelper
+import org.scalatest.matchers.should.Matchers.*
+import play.api.libs.json.*
 
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
@@ -32,6 +34,12 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
   val testOnlyEndpointDeleteData = s"$watchlistTestOnlyEndpoint/delete"
   val testOnlyEndpointCreateData = s"$watchlistTestOnlyEndpoint/create"
   val testOnlyEndpointCounts     = s"$watchlistTestOnlyEndpoint/counts"
+
+  val countsTestOnlyEndpoint = s"$countsDatabaseUrl/test-only/occurrence-logs/data"
+
+  val testOnlyEndpointDeleteCountData  = s"$countsTestOnlyEndpoint/delete"
+  val testOnlyEndpointCreateCountData  = s"$countsTestOnlyEndpoint/create"
+  val testOnlyEndpointOccurrenceCounts = s"$countsTestOnlyEndpoint/counts"
 
   val graphDataTestOnlyEndpoint = s"$graphDatabaseUrl/test-only/cip-risk/str/vertex-data"
 
@@ -85,6 +93,47 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
       Await.result(delete(testOnlyEndpointDeleteData), 10.seconds)
     val responseBody          = clearDataFromEndpoint.body
     responseBody should include regex "Deleted \\d+ watchlist email addresses"
+  }
+
+  def createCountData(numberOfGeneratedEmails: Int, manualEmailAddresses: String): Unit = {
+    val manualEmailsJson = s"[\"$manualEmailAddresses\"]"
+    val request          =
+      s"""{
+         | "generatedEntries": {
+         | "numberOfEmails": $numberOfGeneratedEmails,
+         | "numberOfAttributeGroupsPerEmail": 4
+         | },
+         | "manualEntries": {
+         | "emailAddresses" : $manualEmailsJson,
+         | "numberOfAttributeGroupsPerEmail": 2
+         | }
+         |}""".stripMargin
+
+    val createEmailInsightsTestOnlyData: StandaloneWSResponse =
+      Await.result(
+        post(testOnlyEndpointCreateCountData, request),
+        10.seconds
+      )
+    val responseBody                                          = createEmailInsightsTestOnlyData.body
+    responseBody should include regex "Created \\d+ email occurrence logs"
+    assert(createEmailInsightsTestOnlyData.status == 200)
+  }
+
+  def getCounts: Int = {
+    val response = Await.result(
+      get(testOnlyEndpointOccurrenceCounts),
+      10.seconds
+    )
+    val body     = if (response.status == 200 && response.body.trim.nonEmpty) response.body else "{}"
+    val json     = Json.parse(body)
+    (json \ "emailOccurrenceLogsCount").asOpt[Int].getOrElse(0)
+  }
+
+  def clearCountsData(): Assertion = {
+    val clearDataFromEndpoint =
+      Await.result(delete(testOnlyEndpointDeleteCountData), 10.seconds)
+    val responseBody          = clearDataFromEndpoint.body
+    responseBody should include regex "Deleted \\d+ email occurrence logs"
   }
 
   def createGraphData(numberOfEntries: Int, email: String): Unit = {
@@ -167,9 +216,51 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
     assert(reasons.nonEmpty)
     assert(reasons.exists(_.contains(s"EMAIL '$emailAddress'")))
     assert(reasons.exists(_.contains("hops from something risky")))
-
     assert((json \ "insights" \ "graphData" \ "hops").asOpt[Int].contains(2))
     assert((json \ "insights" \ "graphData" \ "avgHops").asOpt[BigDecimal].exists(_ >= 2))
+
+    def getSeq(value: JsValue, field: String): Seq[JsValue] =
+      (value \ field).asOpt[Seq[JsValue]].getOrElse(Seq.empty)
+
+    val attributes = (json \ "insights" \ "relationship" \ "attributes").asOpt[Seq[JsValue]].getOrElse(Seq.empty)
+    assert(attributes.nonEmpty, "attributes should not be empty")
+
+    assert(attributes.forall(attr => (attr \ "attributeType").asOpt[String].isDefined))
+    assert(attributes.forall(attr => (attr \ "count").asOpt[Int].exists(_ > 0)))
+
+    val attributesWithValues = attributes.map { attr =>
+      val attributeType = (attr \ "attributeType").as[String]
+      val values        = getSeq(attr, "attributeValues")
+      (attributeType, values)
+    }
+
+    val attributeValues = attributesWithValues.flatMap { case (_, values) => values }
+
+    assert(attributeValues.forall(v => (v \ "attributeValue").asOpt[String].isDefined))
+    assert(attributeValues.forall(v => (v \ "numberOfOccurrences").asOpt[Int].isDefined))
+    assert(attributeValues.forall(v => (v \ "lastSeen").asOpt[String].isDefined))
+
+    val expectedPrefixes: Map[String, String] = Map(
+      "agent_code"       -> "agent_code_",
+      "sa_utr"           -> "sa_utr_",
+      "vrn"              -> "vrn_",
+      "ct_utr"           -> "ct_utr_",
+      "paye_ref"         -> "paye_ref_",
+      "user_id"          -> "user_id_",
+      "person_full_name" -> "person_full_name_"
+    )
+
+    attributesWithValues.foreach { case (attributeType, values) =>
+      val expectedPrefix =
+        expectedPrefixes.getOrElse(attributeType, fail(s"Unexpected attributeType: '$attributeType'"))
+      values.foreach { v =>
+        val attributeValue = (v \ "attributeValue").as[String]
+        assert(
+          attributeValue.startsWith(expectedPrefix),
+          s"attributeValue '$attributeValue' does not match prefix '$expectedPrefix' for attributeType '$attributeType'"
+        )
+      }
+    }
   }
 
   def validateSafeNumberPayload(emailAddress: String): Unit = {
