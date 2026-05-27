@@ -204,30 +204,63 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
   }
 
   def validateRiskyEmailPayload(emailAddress: String): Unit = {
-    val response        = postCheckInsightsRequest(emailAddress)
-    val body            = response.body
-    val json            = Json.parse(body)
+    val response = postCheckInsightsRequest(emailAddress)
+    val body     = response.body
+    val json     = Json.parse(body)
     assert((json \ "attributeType").asOpt[String].contains("EMAIL"))
     assert((json \ "attributeValue").asOpt[String].contains(emailAddress))
     assert((json \ "insights" \ "risk" \ "score").asOpt[Int].contains(100))
     assert((json \ "insights" \ "risk" \ "reason").asOpt[String].contains("ON_WATCH_LIST"))
     assert((json \ "insights" \ "watchlistData" \ "isOnWatchlist").asOpt[Boolean].contains(true))
-    val reasons         = (json \ "insights" \ "graphData" \ "reasons").asOpt[Seq[String]].getOrElse(Seq.empty)
+    val reasons  = (json \ "insights" \ "graphData" \ "reasons").asOpt[Seq[String]].getOrElse(Seq.empty)
     assert(reasons.nonEmpty)
     assert(reasons.exists(_.contains(s"EMAIL '$emailAddress'")))
     assert(reasons.exists(_.contains("hops from something risky")))
     assert((json \ "insights" \ "graphData" \ "hops").asOpt[Int].contains(2))
     assert((json \ "insights" \ "graphData" \ "avgHops").asOpt[BigDecimal].exists(_ >= 2))
-    val attributes      = (json \ "insights" \ "relationship" \ "attributes").asOpt[Seq[JsValue]].getOrElse(Seq.empty)
-    assert(attributes.nonEmpty)
-    val attributeValues =
-      attributes.flatMap(attr => (attr \ "attributeValues").asOpt[Seq[JsValue]].getOrElse(Seq.empty))
-    assert(attributeValues.nonEmpty)
-    assert(attributes.exists(attr => (attr \ "attributeType").asOpt[String].isDefined))
-    assert(attributes.exists(attr => (attr \ "count").asOpt[Int].isDefined))
-    assert(attributeValues.exists(v => (v \ "attributeValue").asOpt[String].isDefined))
-    assert(attributeValues.exists(v => (v \ "numberOfOccurrences").asOpt[Int].isDefined))
-    assert(attributeValues.exists(v => (v \ "lastSeen").asOpt[String].isDefined))
+
+    def getSeq(value: JsValue, field: String): Seq[JsValue] =
+      (value \ field).asOpt[Seq[JsValue]].getOrElse(Seq.empty)
+
+    val attributes = (json \ "insights" \ "relationship" \ "attributes").asOpt[Seq[JsValue]].getOrElse(Seq.empty)
+    assert(attributes.nonEmpty, "attributes should not be empty")
+
+    assert(attributes.forall(attr => (attr \ "attributeType").asOpt[String].isDefined))
+    assert(attributes.forall(attr => (attr \ "count").asOpt[Int].exists(_ > 0)))
+
+    val attributesWithValues = attributes.map { attr =>
+      val attributeType = (attr \ "attributeType").as[String]
+      val values        = getSeq(attr, "attributeValues")
+      (attributeType, values)
+    }
+
+    val attributeValues = attributesWithValues.flatMap { case (_, values) => values }
+
+    assert(attributeValues.forall(v => (v \ "attributeValue").asOpt[String].isDefined))
+    assert(attributeValues.forall(v => (v \ "numberOfOccurrences").asOpt[Int].isDefined))
+    assert(attributeValues.forall(v => (v \ "lastSeen").asOpt[String].isDefined))
+
+    val expectedPrefixes: Map[String, String] = Map(
+      "agent_code"       -> "agent_code_",
+      "sa_utr"           -> "sa_utr_",
+      "vrn"              -> "vrn_",
+      "ct_utr"           -> "ct_utr_",
+      "paye_ref"         -> "paye_ref_",
+      "user_id"          -> "user_id_",
+      "person_full_name" -> "person_full_name_"
+    )
+
+    attributesWithValues.foreach { case (attributeType, values) =>
+      val expectedPrefix =
+        expectedPrefixes.getOrElse(attributeType, fail(s"Unexpected attributeType: '$attributeType'"))
+      values.foreach { v =>
+        val attributeValue = (v \ "attributeValue").as[String]
+        assert(
+          attributeValue.startsWith(expectedPrefix),
+          s"attributeValue '$attributeValue' does not match prefix '$expectedPrefix' for attributeType '$attributeType'"
+        )
+      }
+    }
   }
 
   def validateSafeNumberPayload(emailAddress: String): Unit = {
