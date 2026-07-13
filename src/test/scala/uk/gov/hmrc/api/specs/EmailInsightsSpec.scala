@@ -22,8 +22,9 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 class EmailInsightsSpec extends BaseSpec with BeforeAndAfterEach with BeforeAndAfterAll {
 
-  val riskyEmailAddress = "john.doe@test.com"
-  val safeEmailAddress  = "james.hughes@test.com"
+  val riskyEmailAddress     = "john.doe@test.com"
+  val safeEmailAddress      = "james.hughes@test.com"
+  val graphOnlyEmailAddress = "henry.smith@test.com"
 
   val invalidPayload          = "{}"
   val invalidInsightsEndpoint = s"$baseUrl/check/invalid-endpoint"
@@ -103,6 +104,26 @@ class EmailInsightsSpec extends BaseSpec with BeforeAndAfterEach with BeforeAndA
       Then("a 404 HTTP response is returned")
       assert(response.status == 404)
       assert(response.body.contains("URI not found"))
+    }
+
+    Scenario("[EI.2.3] - Email exists in graph data and returns a shortest path graph response") {
+      Given("the graph database is empty")
+      assert(getGraphData.isEmpty)
+
+      When(s"I add graph data for the email address '$graphOnlyEmailAddress'")
+      createShortestPathGraphEmailAddress(
+        Seq(
+          (1, riskyEmailAddress, 0),
+          (2, safeEmailAddress, 1),
+          (3, graphOnlyEmailAddress, 2)
+        )
+      )
+
+      And("I send a POST request to the check/insights endpoint")
+      postCheckInsightsRequest(graphOnlyEmailAddress)
+
+      Then("the response should include the expected shortest path graph response")
+      validateShortestPathGraphResponse(graphOnlyEmailAddress)
     }
   }
 }
