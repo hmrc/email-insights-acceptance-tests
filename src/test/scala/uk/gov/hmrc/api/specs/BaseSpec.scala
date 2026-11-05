@@ -329,6 +329,8 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
     val response = postCheckInsightsRequest(emailAddress)
     val body     = response.body
     val json     = Json.parse(body)
+    info("Full response:")
+    info(Json.prettyPrint(json))
     assert((json \ "attributeType").asOpt[String].contains("EMAIL"))
     assert((json \ "attributeValue").asOpt[String].contains(emailAddress))
 
@@ -363,7 +365,9 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
 
     assert(riskDetails.nonEmpty)
 
-    val riskDetail = riskDetails.head
+    val riskDetail = riskDetails
+      .find(detail => (detail \ "source" \ "attributeId").asOpt[String].contains(emailAddress))
+      .getOrElse(fail(s"No risk detail has source email '$emailAddress': ${Json.stringify(Json.toJson(riskDetails))}"))
     assert((riskDetail \ "source" \ "attributeId").asOpt[String].contains(emailAddress))
     assert((riskDetail \ "source" \ "attributeType").asOpt[String].contains("email"))
     assert((riskDetail \ "destination" \ "attributeId").asOpt[String].isDefined)
