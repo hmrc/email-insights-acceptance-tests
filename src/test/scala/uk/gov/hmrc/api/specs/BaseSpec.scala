@@ -329,8 +329,6 @@ trait BaseSpec extends AnyFeatureSpec with GivenWhenThen with Matchers with Http
     val response = postCheckInsightsRequest(emailAddress)
     val body     = response.body
     val json     = Json.parse(body)
-    info("Full response:")
-    info(Json.prettyPrint(json))
     assert((json \ "attributeType").asOpt[String].contains("EMAIL"))
     assert((json \ "attributeValue").asOpt[String].contains(emailAddress))
 
